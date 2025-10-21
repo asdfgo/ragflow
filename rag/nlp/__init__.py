@@ -871,3 +871,44 @@ class Node:
         # Recurse into children with the updated title path
         for c in child:
             self._dfs(c, tree_list, path_titles)
+
+
+# modify by y, 额外的在每段尾部进一步分块，如果分块还是太长就在合适的句子末尾再分块儿
+
+_SENT_END = r"[。！？]"          # 中文常见句末标点
+_PARA_SPLIT = re.compile(r"\n\s*\n+")    # 空行视为段落边界
+
+def split_paragraph_then_sentence(text: str, char_limit: int = 1000):
+    text = (text or "").strip()
+    if not text:
+        return []
+
+    parts = []
+    paras = _PARA_SPLIT.split(text)
+
+    for para in paras:
+        para = para.strip()
+        if not para:
+            continue
+
+        if len(para) <= char_limit:
+            parts.append(para)
+            continue
+
+        # 句末二次切分
+        sentences = re.split(f"(?<={_SENT_END})", para)
+        buf = ""
+        for s in sentences:
+            s = s.strip()
+            if not s:
+                continue
+            if len(buf) + len(s) <= char_limit:
+                buf += s
+            else:
+                if buf:
+                    parts.append(buf.strip())
+                buf = s
+        if buf:
+            parts.append(buf.strip())
+
+    return [p for p in parts if p]

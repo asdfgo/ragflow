@@ -24,6 +24,10 @@ from rag.nlp import rag_tokenizer, tokenize, tokenize_table, add_positions, bull
 from deepdoc.parser import PdfParser, PlainParser
 import numpy as np
 
+# 假设 initial_chunks 是 Paper 原始生成的 chunks 列表
+# 每个元素包含文本与丰富元数据（页码/图片/bbox/顺序等）
+from rag.nlp import split_paragraph_then_sentence
+
 class Pdf(PdfParser):
     def __init__(self):
         self.model_speciess = ParserType.PAPER.value
@@ -211,7 +215,37 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
         chunks.append(txt)
         last_sid = sec_id
     res.extend(tokenize_chunks(chunks, doc, eng, pdf_parser))
-    return res
+
+
+    # return res
+
+    initial_chunks = res  # Paper 模板本来的产物
+    max_chars = 1000
+
+    new_chunks = []
+    order = 0
+    for ch in initial_chunks:
+        text = ch.get("content") or ch.get("text") or ""
+        sub_texts = split_paragraph_then_sentence(text, char_limit=max_chars)
+
+        if not sub_texts:
+            # 保底：保留原块，避免空
+            order += 1
+            ch2 = dict(ch)
+            ch2["order"] = order
+            new_chunks.append(ch2)
+            continue
+
+        for t in sub_texts:
+            order += 1
+            ch2 = dict(ch)   # 浅拷贝，保留全部元数据
+            # 项目里字段可能叫 content 或 text，按实际统一
+            if "content" in ch2: ch2["content"] = t
+            else: ch2["text"] = t
+            ch2["order"] = order
+            new_chunks.append(ch2)
+
+    return new_chunks
 
 
 """
