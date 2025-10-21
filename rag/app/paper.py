@@ -217,8 +217,9 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
     res.extend(tokenize_chunks(chunks, doc, eng, pdf_parser))
 
 
-    # return res
+    return res
 
+    '''
     initial_chunks = res  # Paper 模板本来的产物
     max_chars = 1000
 
@@ -246,6 +247,7 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
             new_chunks.append(ch2)
 
     return new_chunks
+    '''
 
 
 """

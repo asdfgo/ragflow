@@ -43,12 +43,7 @@ services:
       - ../history_data_agent:/ragflow/history_data_agent
       - ./service_conf.yaml.template:/ragflow/conf/service_conf.yaml.template
       - ./entrypoint.sh:/ragflow/entrypoint.sh
-      # === 下面是你新增的源码挂载 ===
-      - ../rag:/ragflow/rag         # 只覆盖后端 Python 包
-      # 如果你还要改 API 层或其他目录，可按需加：
-      # - ../api:/ragflow/api
-      # - ../deepdoc:/ragflow/deepdoc
-      # - ../web:/ragflow/web        # (前端改动需重新 build，见注意事项)
+      - ../rag:/ragflow/rag
     env_file: .env
     environment:
       - TZ=${TIMEZONE}
