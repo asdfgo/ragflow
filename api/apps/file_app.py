@@ -95,6 +95,15 @@ async def upload():
             # file type
             filetype = filename_type(file_obj_names[file_len - 1])
             location = file_obj_names[file_len - 1]
+
+
+
+            # by asdf : 如果文件已经存在，就禁止上传
+            if settings.STORAGE_IMPL.obj_exist(last_folder.id, location):
+                return get_data_error_result(message="Duplicate file name!")
+
+
+
             while settings.STORAGE_IMPL.obj_exist(last_folder.id, location):
                 location += "_"
             blob = file_obj.read()
@@ -427,6 +436,14 @@ async def move():
             old_location = source_file_entry.location
             filename = source_file_entry.name
 
+
+
+            # by asdf : 如果目标位置存在同名文件，就不允许移过去
+            if settings.STORAGE_IMPL.obj_exist(dest_folder.id, filename) or settings.STORAGE_IMPL.obj_exist(dest_folder.id, old_location):
+                raise RuntimeError(f"Move file failed. File already exists: {filename}")
+				
+				
+				
             new_location = filename
             while settings.STORAGE_IMPL.obj_exist(dest_folder.id, new_location):
                 new_location += "_"

@@ -442,6 +442,15 @@ class FileService(CommonService):
                     raise RuntimeError("This type of file has not been supported yet!")
 
                 location = filename if not safe_parent_path else f"{safe_parent_path}/{filename}"
+
+
+
+                # by asdf : 如果文件已经存在，就跳过
+                if filename!=file.filename or settings.STORAGE_IMPL.obj_exist(kb.id, location):
+                    continue
+
+
+
                 while settings.STORAGE_IMPL.obj_exist(kb.id, location):
                     location += "_"
 
