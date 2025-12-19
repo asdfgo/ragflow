@@ -17,6 +17,7 @@ import logging
 import os
 import random
 import xxhash
+import json
 from datetime import datetime
 
 from api.db.db_utils import bulk_insert_into_db
@@ -374,6 +375,12 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
 
 
         page_ranges = doc["parser_config"].get("pages") or [(1, 10 ** 5)]
+
+
+        # by asdf : debug
+        logging.warning("page_ranges = %s", json.dumps(page_ranges))
+
+
         for s, e in page_ranges:
             s -= 1
             s = max(0, s)
