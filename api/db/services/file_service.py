@@ -462,11 +462,14 @@ class FileService(CommonService):
 
                 doc_id = get_uuid()
 
-                img = thumbnail_img(filename, blob)
                 thumbnail_location = ""
-                if img is not None:
-                    thumbnail_location = f"thumbnail_{doc_id}.png"
-                    settings.STORAGE_IMPL.put(kb.id, thumbnail_location, img)
+                try:
+                    img = thumbnail_img(filename, blob)
+                    if img is not None:
+                        thumbnail_location = f"thumbnail_{doc_id}.png"
+                        settings.STORAGE_IMPL.put(kb.id, thumbnail_location, img)
+                except Exception as e:
+                    pass
 
                 doc = {
                     "id": doc_id,
