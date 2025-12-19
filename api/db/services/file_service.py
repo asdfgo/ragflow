@@ -436,21 +436,21 @@ class FileService(CommonService):
         for file in file_objs:
             try:
                 DocumentService.check_doc_health(kb.tenant_id, file.filename)
+
+
+                # by asdf : 如果文件已经存在于存储和数据库，就跳过
                 old_filename = file.filename
+                old_location = old_filename if not safe_parent_path else f"{safe_parent_path}/{old_filename}"
+                if settings.STORAGE_IMPL.obj_exist(kb.id, old_location) and self.get_by_pf_id_name(kb.id, old_filename)
+                    continue
+
+
                 filename = duplicate_name(DocumentService.query, name=file.filename, kb_id=kb.id)
                 filetype = filename_type(filename)
                 if filetype == FileType.OTHER.value:
                     raise RuntimeError("This type of file has not been supported yet!")
 
                 location = filename if not safe_parent_path else f"{safe_parent_path}/{filename}"
-
-
-                # by asdf : 如果文件已经存在，就跳过
-                if filename!=old_filename or settings.STORAGE_IMPL.obj_exist(kb.id, location):
-                    f = self.get_by_pf_id_name(kb.id, old_filename)
-                    if f:
-                        continue
-
 
                 while settings.STORAGE_IMPL.obj_exist(kb.id, location):
                     location += "_"
