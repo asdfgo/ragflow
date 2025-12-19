@@ -441,7 +441,7 @@ class FileService(CommonService):
                 # by asdf : 如果文件已经存在于存储和数据库，就跳过
                 old_filename = file.filename
                 old_location = old_filename if not safe_parent_path else f"{safe_parent_path}/{old_filename}"
-                if settings.STORAGE_IMPL.obj_exist(kb.id, old_location) and self.get_by_pf_id_name(kb.id, old_filename)
+                if settings.STORAGE_IMPL.obj_exist(kb.id, old_location) and self.get_by_pf_id_name(kb.id, old_filename):
                     continue
 
 
