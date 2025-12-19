@@ -436,6 +436,7 @@ class FileService(CommonService):
         for file in file_objs:
             try:
                 DocumentService.check_doc_health(kb.tenant_id, file.filename)
+                old_filename = file.filename
                 filename = duplicate_name(DocumentService.query, name=file.filename, kb_id=kb.id)
                 filetype = filename_type(filename)
                 if filetype == FileType.OTHER.value:
@@ -444,11 +445,11 @@ class FileService(CommonService):
                 location = filename if not safe_parent_path else f"{safe_parent_path}/{filename}"
 
 
-
                 # by asdf : 如果文件已经存在，就跳过
-                if filename!=file.filename or settings.STORAGE_IMPL.obj_exist(kb.id, location):
-                    continue
-
+                if filename!=old_filename or settings.STORAGE_IMPL.obj_exist(kb.id, location):
+                    f = self.get_by_pf_id_name(kb.id, old_filename)
+                    if f:
+                        continue
 
 
                 while settings.STORAGE_IMPL.obj_exist(kb.id, location):
