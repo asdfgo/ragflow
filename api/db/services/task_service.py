@@ -367,6 +367,12 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
             page_size = doc["parser_config"].get("task_page_size") or 22
         if doc["parser_id"] in ["one", "knowledge_graph"] or do_layout != "DeepDOC" or doc["parser_config"].get("toc_extraction", False):
             page_size = 10 ** 9
+
+
+        # by asdf : debug
+        logging.warning("page_size = %d", page_size)
+
+
         page_ranges = doc["parser_config"].get("pages") or [(1, 10 ** 5)]
         for s, e in page_ranges:
             s -= 1
@@ -388,6 +394,11 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
             parse_task_array.append(task)
     else:
         parse_task_array.append(new_task())
+
+
+    # by asdf : debug
+    logging.warning("parse_task_array length = %d", len(parse_task_array))
+
 
     chunking_config = DocumentService.get_chunking_config(doc["id"])
     for task in parse_task_array:
@@ -419,6 +430,16 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
             settings.docStoreConn.delete({"id": pre_chunk_ids}, search.index_name(chunking_config["tenant_id"]),
                                          chunking_config["kb_id"])
     DocumentService.update_by_id(doc["id"], {"chunk_num": ck_num})
+
+
+    # by asdf : debug
+    logging.warning("parse_task_array length = %d", len(parse_task_array))
+
+
+    # by asdf 如果为空会在bulk_insert_into_db里出错
+    if not parse_task_array:
+        return
+
 
     bulk_insert_into_db(Task, parse_task_array, True)
     DocumentService.begin2parse(doc["id"])
