@@ -364,28 +364,9 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
     if doc["type"] == FileType.PDF.value:
         file_bin = settings.STORAGE_IMPL.get(bucket, name)
         do_layout = doc["parser_config"].get("layout_recognize", "DeepDOC")
-
-
-        # by asdf : 输出 fnm 和 binary 参数的情况
-        binary_length = len(file_bin) if file_bin else 0
-        logging.warning("total_page_number called with fnm: %s, binary length: %d", doc["name"], binary_length)
-
-
-        try:
-            fnm = doc["name"]
-            binary = file_bin
-            pdf = pdfplumber.open(fnm) if not binary else pdfplumber.open(BytesIO(binary))
-            total_page = len(pdf.pages)
-            pdf.close()
-            if not total_page:
-                logging.warning("total_page_number <= 0")
-        except Exception:
-            logging.warning("total_page_number")
-
-
         pages = PdfParser.total_page_number(doc["name"], file_bin)
         if pages is None:
-            pages = 0
+            pages = 4 # by asdf : debug
         page_size = doc["parser_config"].get("task_page_size") or 12
         if doc["parser_id"] == "paper":
             page_size = doc["parser_config"].get("task_page_size") or 22
