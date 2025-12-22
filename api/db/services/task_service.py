@@ -19,6 +19,10 @@ import random
 import xxhash
 import json
 from datetime import datetime
+import sys
+import pdfplumber
+import threading
+from io import BytesIO
 
 from api.db.db_utils import bulk_insert_into_db
 from deepdoc.parser import PdfParser
@@ -365,6 +369,18 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
         # by asdf : 输出 fnm 和 binary 参数的情况
         binary_length = len(file_bin) if file_bin else 0
         logging.warning("total_page_number called with fnm: %s, binary length: %d", doc["name"], binary_length)
+
+
+        try:
+            fnm = doc["name"]
+            binary = file_bin
+            pdf = pdfplumber.open(fnm) if not binary else pdfplumber.open(BytesIO(binary))
+            total_page = len(pdf.pages)
+            pdf.close()
+            if not total_page:
+                logging.warning("total_page_number <= 0")
+        except Exception:
+            logging.warning("total_page_number")
 
 
         pages = PdfParser.total_page_number(doc["name"], file_bin)
