@@ -150,7 +150,7 @@ dependencies = [
     "pip>=25.2",
     "pypandoc>=1.16",
 
-    
+    # by asdf
     "PyMuPDF==1.23.25",
     "PyMuPDFb==1.23.22",
 ]
