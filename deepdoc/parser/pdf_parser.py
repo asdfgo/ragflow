@@ -1027,7 +1027,7 @@ class RAGFlowPdfParser:
 
 
         # by asdf : 应对扫描pdf
-        if total_page==0:
+        if total_page is None or total_page==0:
             try:
                 with sys.modules[LOCK_KEY_pdfplumber]:
                     pdf: Any = fitz.open(fnm) if not binary else fitz.open(stream=binary, filetype="pdf")
