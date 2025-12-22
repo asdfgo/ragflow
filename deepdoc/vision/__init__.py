@@ -35,7 +35,7 @@ def init_in_out(args):
     import traceback
 
     from PIL import Image
-
+    import fitz
     from common.file_utils import traversal_files
 
     images = []
@@ -47,12 +47,23 @@ def init_in_out(args):
     def pdf_pages(fnm, zoomin=3):
         nonlocal outputs, images
         with sys.modules[LOCK_KEY_pdfplumber]:
-            pdf = pdfplumber.open(fnm)
-            images = [p.to_image(resolution=72 * zoomin).annotated for i, p in enumerate(pdf.pages)]
+            try:
+                pdf = pdfplumber.open(fnm)
+                images = [p.to_image(resolution=72 * zoomin).annotated for i, p in enumerate(pdf.pages)]
+                for i, page in enumerate(images):
+                    outputs.append(os.path.split(fnm)[-1] + f"_{i}.jpg")
+                pdf.close()
+            except Exception:
+                # by asdf : 应对扫描pdf
+                pdf = fitz.open(fnm)
+                mat = fitz.Matrix(zoomin, zoomin)
+                for i, page in enumerate(pdf):
+                    pix = page.get_pixmap(matrix=mat)
+                    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                    images.append(img)
+                    outputs.append(os.path.split(fnm)[-1] + f"_{i}.jpg")
+                pdf.close()
 
-        for i, page in enumerate(images):
-            outputs.append(os.path.split(fnm)[-1] + f"_{i}.jpg")
-        pdf.close()
 
     def images_and_outputs(fnm):
         nonlocal outputs, images

@@ -25,6 +25,10 @@ from collections import Counter, defaultdict
 from copy import deepcopy
 from io import BytesIO
 from timeit import default_timer as timer
+from typing import Any
+
+# by asdf
+import fitz  # PyMuPDF
 
 import numpy as np
 import pdfplumber
@@ -1010,24 +1014,30 @@ class RAGFlowPdfParser:
 
     @staticmethod
     def total_page_number(fnm, binary=None):
+        total_page = 0
+
+
         try:
-
-
-            # by asdf : 输出 fnm 和 binary 参数的情况
-            binary_length = len(binary) if binary else 0
-            logging.warning("total_page_number called with fnm: %s, binary length: %d", fnm, binary_length)
-
-
-
             with sys.modules[LOCK_KEY_pdfplumber]:
                 pdf = pdfplumber.open(fnm) if not binary else pdfplumber.open(BytesIO(binary))
             total_page = len(pdf.pages)
             pdf.close()
-            if not total_page:
-                logging.warning("total_page_number <= 0")
-            return total_page
         except Exception:
             logging.exception("total_page_number")
+
+
+        # by asdf : 应对扫描pdf
+        if total_page==0:
+            try:
+                with sys.modules[LOCK_KEY_pdfplumber]:
+                    pdf: Any = fitz.open(fnm) if not binary else fitz.open(stream=binary, filetype="pdf")
+                total_page = pdf.page_count
+                pdf.close()
+            except Exception:
+                logging.exception("total_page_number")
+        
+
+        return total_page
 
     def __images__(self, fnm, zoomin=3, page_from=0, page_to=299, callback=None):
         self.lefted_chars = []
@@ -1041,17 +1051,35 @@ class RAGFlowPdfParser:
         start = timer()
         try:
             with sys.modules[LOCK_KEY_pdfplumber]:
-                with pdfplumber.open(fnm) if isinstance(fnm, str) else pdfplumber.open(BytesIO(fnm)) as pdf:
-                    self.pdf = pdf
-                    self.page_images = [p.to_image(resolution=72 * zoomin, antialias=True).annotated for i, p in enumerate(self.pdf.pages[page_from:page_to])]
+                try:
+                    with pdfplumber.open(fnm) if isinstance(fnm, str) else pdfplumber.open(BytesIO(fnm)) as pdf:
+                        self.pdf = pdf
+                        self.page_images = [p.to_image(resolution=72 * zoomin, antialias=True).annotated for i, p in enumerate(self.pdf.pages[page_from:page_to])]
 
-                    try:
-                        self.page_chars = [[c for c in page.dedupe_chars().chars if self._has_color(c)] for page in self.pdf.pages[page_from:page_to]]
-                    except Exception as e:
-                        logging.warning(f"Failed to extract characters for pages {page_from}-{page_to}: {str(e)}")
-                        self.page_chars = [[] for _ in range(page_to - page_from)]  # If failed to extract, using empty list instead.
+                        try:
+                            self.page_chars = [[c for c in page.dedupe_chars().chars if self._has_color(c)] for page in self.pdf.pages[page_from:page_to]]
+                        except Exception as e:
+                            logging.warning(f"Failed to extract characters for pages {page_from}-{page_to}: {str(e)}")
+                            self.page_chars = [[] for _ in range(page_to - page_from)]  # If failed to extract, using empty list instead.
 
-                    self.total_page = len(self.pdf.pages)
+                        self.total_page = len(self.pdf.pages)
+                except Exception as e:
+                    # by asdf ：应对扫描pdf
+                    self.pdf = fitz.open(fnm) if isinstance(fnm, str) else fitz.open(stream=fnm, filetype="pdf")
+                    self.page_images = []
+                    self.page_chars = []
+                    mat = fitz.Matrix(zoomin, zoomin)
+                    self.total_page = len(self.pdf)
+                    for i, page in enumerate(self.pdf):
+                        if i < page_from:
+                            continue
+                        if i >= page_to:
+                            break
+                        pix = page.get_pixmap(matrix=mat)
+                        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                        self.page_images.append(img)
+                        self.page_chars.append([])
+
 
         except Exception:
             logging.exception("RAGFlowPdfParser __images__")
