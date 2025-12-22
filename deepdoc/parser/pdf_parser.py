@@ -1011,10 +1011,20 @@ class RAGFlowPdfParser:
     @staticmethod
     def total_page_number(fnm, binary=None):
         try:
+
+
+            # by asdf : 输出 fnm 和 binary 参数的情况
+            binary_length = len(binary) if binary else 0
+            logging.debug("total_page_number called with fnm: %s, binary length: %d", fnm, binary_length)
+
+
+
             with sys.modules[LOCK_KEY_pdfplumber]:
                 pdf = pdfplumber.open(fnm) if not binary else pdfplumber.open(BytesIO(binary))
             total_page = len(pdf.pages)
             pdf.close()
+            if not total_page:
+                logging.exception("total_page_number <= 0")
             return total_page
         except Exception:
             logging.exception("total_page_number")
