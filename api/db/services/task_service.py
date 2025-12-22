@@ -360,6 +360,13 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
     if doc["type"] == FileType.PDF.value:
         file_bin = settings.STORAGE_IMPL.get(bucket, name)
         do_layout = doc["parser_config"].get("layout_recognize", "DeepDOC")
+
+
+        # by asdf : 输出 fnm 和 binary 参数的情况
+        binary_length = len(file_bin) if file_bin else 0
+        logging.warning("total_page_number called with fnm: %s, binary length: %d", doc["name"], binary_length)
+
+
         pages = PdfParser.total_page_number(doc["name"], file_bin)
         if pages is None:
             pages = 0
