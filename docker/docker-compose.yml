@@ -45,6 +45,7 @@ services:
 
       - ../libs:/ragflow/libs
       - ../api:/ragflow/api
+      - ../deepdoc:/ragflow/deepdoc
     env_file: .env
     networks:
       - ragflow
