@@ -364,6 +364,8 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
     if doc["type"] == FileType.PDF.value:
         file_bin = settings.STORAGE_IMPL.get(bucket, name)
         do_layout = doc["parser_config"].get("layout_recognize", "DeepDOC")
+
+        logging.warning("entering total_page_number")
         pages = PdfParser.total_page_number(doc["name"], file_bin)
         if pages is None:
             pages = 0

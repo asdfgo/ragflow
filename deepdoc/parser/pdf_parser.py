@@ -1014,6 +1014,9 @@ class RAGFlowPdfParser:
 
     @staticmethod
     def total_page_number(fnm, binary=None):
+        logging.warning("entered total_page_number")
+
+
         total_page = 0
 
         try:
@@ -1023,8 +1026,6 @@ class RAGFlowPdfParser:
             pdf.close()
         except Exception:
             logging.warning("pdfplumber open error, %s, total_page == 0", fnm)
-
-        logging.warning("pdfplumber open error, %s, total_page == 0", fnm)
 
         # by asdf : 应对扫描pdf
         if not total_page:
