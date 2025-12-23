@@ -1067,19 +1067,21 @@ class RAGFlowPdfParser:
                                 self.page_chars = [[] for _ in range(page_to - page_from)]  # If failed to extract, using empty list instead.
                 except Exception as e:
                     self.total_page = 0
-                    logging.warning("RAGFlowPdfParser.__images__ (pdfplumber) error, %", fnm)
+                    logging.warning("RAGFlowPdfParser.__images__ (pdfplumber) error, %s", fnm)
 
 
                 logging.info(f"RAGFlowPdfParser.__images__ (pdfplumber) self.total_page = %d", self.total_page)
 
                 # by asdf ：应对扫描pdf
-                if not self.total_page or not self.page_images:
+                if not self.total_page:
                     try:
                         logging.warning("begin RAGFlowPdfParser.__images__ (fitz) error, %s", fnm)
 
                         with fitz.open(fnm) if isinstance(fnm, str) else fitz.open(stream=fnm, filetype="pdf") as pdf:
                             self.pdf = pdf
                             self.total_page = pdf.page_count
+                            self.page_images = []
+                            self.page_chars = []
 
                             logging.warning("RAGFlowPdfParser.__images__ (fitz), total_page = %d, len(self.pdf) = %d", self.total_page, len(self.pdf))
 
@@ -1095,11 +1097,11 @@ class RAGFlowPdfParser:
                                     self.page_images.append(img)
                                     self.page_chars.append([])
                     except Exception as e:
-                        logging.exception("RAGFlowPdfParser.__images__ (fitz) error, %s, total_page == 0", fnm)
+                        logging.exception("RAGFlowPdfParser.__images__ (fitz) error, %s", fnm)
 
         except Exception:
-            logging.exception("RAGFlowPdfParser __images__")
-        logging.info(f"__images__ dedupe_chars cost {timer() - start}s")
+            logging.exception(f"RAGFlowPdfParser __images__: {str(e)}")
+        logging.info(f"__images__ dedupe_chars cost {timer() - start}")
 
         self.outlines = []
         try:
