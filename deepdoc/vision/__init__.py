@@ -35,6 +35,7 @@ def init_in_out(args):
     import traceback
 
     from PIL import Image
+    import logging
     import fitz
     from common.file_utils import traversal_files
 
@@ -45,24 +46,34 @@ def init_in_out(args):
         os.mkdir(args.output_dir)
 
     def pdf_pages(fnm, zoomin=3):
+        total_page = 0
+
         nonlocal outputs, images
         with sys.modules[LOCK_KEY_pdfplumber]:
             try:
                 pdf = pdfplumber.open(fnm)
-                images = [p.to_image(resolution=72 * zoomin).annotated for i, p in enumerate(pdf.pages)]
-                for i, page in enumerate(images):
-                    outputs.append(os.path.split(fnm)[-1] + f"_{i}.jpg")
+                total_page = len(pdf.pages)
+                if total_page:
+                    images = [p.to_image(resolution=72 * zoomin).annotated for i, p in enumerate(pdf.pages)]
+                    for i, page in enumerate(images):
+                        outputs.append(os.path.split(fnm)[-1] + f"_{i}.jpg")
                 pdf.close()
             except Exception:
-                # by asdf : 应对扫描pdf
-                pdf = fitz.open(fnm)
-                mat = fitz.Matrix(zoomin, zoomin)
-                for i, page in enumerate(pdf):
-                    pix = page.get_pixmap(matrix=mat)
-                    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-                    images.append(img)
-                    outputs.append(os.path.split(fnm)[-1] + f"_{i}.jpg")
-                pdf.close()
+                logging.warning("pdf_pages(pdfplumber) error, %s", fnm)
+
+
+            # by asdf : 应对扫描pdf
+            if not total_page:
+                try:
+                    with fitz.open(fnm) as pdf:
+                        mat = fitz.Matrix(zoomin, zoomin)
+                        for i, page in enumerate(pdf):
+                            pix = page.get_pixmap(matrix=mat)
+                            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                            images.append(img)
+                            outputs.append(os.path.split(fnm)[-1] + f"_{i}.jpg")
+                except Exception:
+                    logging.warning("pdf_pages(fitz) error, %s", fnm)
 
 
     def images_and_outputs(fnm):

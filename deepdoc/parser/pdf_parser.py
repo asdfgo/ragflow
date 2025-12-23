@@ -1014,21 +1014,6 @@ class RAGFlowPdfParser:
 
     @staticmethod
     def total_page_number(fnm, binary=None):
-        # 方法1：使用 print 确认函数执行
-        print(f"[DEBUG] Entered total_page_number: {fnm}")
-        
-        # 方法2：使用 logging 的不同级别
-        logging.debug("entered total_page_number - debug")
-        logging.info("entered total_page_number - info")
-        logging.warning("entered total_page_number - warning")
-        logging.error("entered total_page_number - error")
-        
-        # 方法3：检查当前模块的日志配置
-        current_logger = logging.getLogger(__name__)
-        logging.warning(f"Current logger level: {current_logger.level}")
-        logging.warning(f"Effective level: {current_logger.getEffectiveLevel()}")
-
-
         total_page = 0
 
         try:
@@ -1037,19 +1022,19 @@ class RAGFlowPdfParser:
             total_page = len(pdf.pages)
             pdf.close()
         except Exception:
-            logging.warning("pdfplumber open error, %s, total_page == 0", fnm)
+            logging.warning("pdfplumber open error, %s", fnm)
+
 
         # by asdf : 应对扫描pdf
         if not total_page:
             try:
                 logging.exception("total_page_number")
                 with sys.modules[LOCK_KEY_pdfplumber]:
-                    pdf: Any = fitz.open(fnm) if not binary else fitz.open(stream=binary, filetype="pdf")
-                total_page = pdf.page_count
-                pdf.close()
-                logging.warning("fitz ok, %s, total_page == %d", fnm, total_page)
+                    with fitz.open(fnm) if not binary else fitz.open(stream=binary, filetype="pdf") as pdf:
+                        total_page = pdf.page_count
+                        logging.warning("total_page_number (fitz) ok, %s, total_page == %d", fnm, total_page)
             except Exception:
-                logging.exception("total_page_number fitz error")
+                logging.exception("total_page_number fitz error, %s", fnm)
         
         return total_page
 
@@ -1068,31 +1053,39 @@ class RAGFlowPdfParser:
                 try:
                     with pdfplumber.open(fnm) if isinstance(fnm, str) else pdfplumber.open(BytesIO(fnm)) as pdf:
                         self.pdf = pdf
-                        self.page_images = [p.to_image(resolution=72 * zoomin, antialias=True).annotated for i, p in enumerate(self.pdf.pages[page_from:page_to])]
-
-                        try:
-                            self.page_chars = [[c for c in page.dedupe_chars().chars if self._has_color(c)] for page in self.pdf.pages[page_from:page_to]]
-                        except Exception as e:
-                            logging.warning(f"Failed to extract characters for pages {page_from}-{page_to}: {str(e)}")
-                            self.page_chars = [[] for _ in range(page_to - page_from)]  # If failed to extract, using empty list instead.
-
                         self.total_page = len(self.pdf.pages)
+                        if self.total_page:
+                            self.page_images = [p.to_image(resolution=72 * zoomin, antialias=True).annotated for i, p in enumerate(self.pdf.pages[page_from:page_to])]
+                            try:
+                                self.page_chars = [[c for c in page.dedupe_chars().chars if self._has_color(c)] for page in self.pdf.pages[page_from:page_to]]
+                            except Exception as e:
+                                logging.warning(f"Failed to extract characters for pages {page_from}-{page_to}: {str(e)}")
+                                self.page_chars = [[] for _ in range(page_to - page_from)]  # If failed to extract, using empty list instead.
                 except Exception as e:
-                    # by asdf ：应对扫描pdf
-                    self.pdf = fitz.open(fnm) if isinstance(fnm, str) else fitz.open(stream=fnm, filetype="pdf")
-                    self.page_images = []
-                    self.page_chars = []
-                    mat = fitz.Matrix(zoomin, zoomin)
-                    self.total_page = len(self.pdf)
-                    for i, page in enumerate(self.pdf):
-                        if i < page_from:
-                            continue
-                        if i >= page_to:
-                            break
-                        pix = page.get_pixmap(matrix=mat)
-                        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-                        self.page_images.append(img)
-                        self.page_chars.append([])
+                    logging.warning("RAGFlowPdfParser.__images__ (pdfplumber) error, %s, total_page == 0", fnm)
+
+
+                # by asdf ：应对扫描pdf
+                if not self.total_page:
+                    try:
+                        with fitz.open(fnm) if isinstance(fnm, str) else fitz.open(stream=fnm, filetype="pdf") as pdf:
+                            self.pdf = pdf
+                            self.total_page = pdf.page_count
+                            if self.total_page:
+                                self.page_images = []
+                                self.page_chars = []
+                                mat = fitz.Matrix(zoomin, zoomin)
+                                for i, page in enumerate(self.pdf):
+                                    if i < page_from:
+                                        continue
+                                    if i >= page_to:
+                                        break
+                                    pix = page.get_pixmap(matrix=mat)
+                                    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                                    self.page_images.append(img)
+                                    self.page_chars.append([])
+                    except Exception as e:
+                        logging.exception("RAGFlowPdfParser.__images__ (fitz) error, %s, total_page == 0", fnm)
 
 
         except Exception:

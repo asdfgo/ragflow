@@ -26,6 +26,7 @@ import threading
 from io import BytesIO
 
 # by asdf
+import logging
 import fitz  # PyMuPDF
 
 import pdfplumber
@@ -63,30 +64,41 @@ def thumbnail_img(filename, blob):
     """
     filename = filename.lower()
     if re.match(r".*\.pdf$", filename):
+        total_page = 0
+        img = None
+
         with sys.modules[LOCK_KEY_pdfplumber]:
             try:
                 pdf = pdfplumber.open(BytesIO(blob))
-                buffered = BytesIO()
-                resolution = 32
-                img = None
-                for _ in range(10):
-                    # https://github.com/jsvine/pdfplumber?tab=readme-ov-file#creating-a-pageimage-with-to_image
-                    pdf.pages[0].to_image(resolution=resolution).annotated.save(buffered, format="png")
-                    img = buffered.getvalue()
-                    if len(img) >= 64000 and resolution >= 2:
-                        resolution = resolution / 2
-                        buffered = BytesIO()
-                    else:
-                        break
+                total_page = len(pdf.pages)
+                if total_page:
+                    buffered = BytesIO()
+                    resolution = 32
+                    for _ in range(10):
+                        # https://github.com/jsvine/pdfplumber?tab=readme-ov-file#creating-a-pageimage-with-to_image
+                        pdf.pages[0].to_image(resolution=resolution).annotated.save(buffered, format="png")
+                        img = buffered.getvalue()
+                        if len(img) >= 64000 and resolution >= 2:
+                            resolution = resolution / 2
+                            buffered = BytesIO()
+                        else:
+                            break
                 pdf.close()
             except Exception:
-                # by asdf : 应对扫描pdf
-                pdf = fitz.open(stream=blob, filetype="pdf")
-                pix = pdf[0].get_pixmap(matrix=fitz.Matrix(0.03, 0.03))
-                buffered = BytesIO()
-                Image.frombytes("RGB", [pix.width, pix.height], pix.samples).save(buffered, format="png")
-                img = "data:image/png;base64," + base64.b64encode(buffered.getvalue()).decode("utf-8")
-                pdf.close()
+                logging.warning("thumbnail_img(pdfplumber) open error, %s", filename)
+
+
+            # by asdf : 应对扫描pdf
+            if not total_page:
+                try:
+                    pdf = fitz.open(stream=blob, filetype="pdf")
+                    pix = pdf[0].get_pixmap(matrix=fitz.Matrix(0.03, 0.03))
+                    buffered = BytesIO()
+                    Image.frombytes("RGB", [pix.width, pix.height], pix.samples).save(buffered, format="png")
+                    img = "data:image/png;base64," + base64.b64encode(buffered.getvalue()).decode("utf-8")
+                    pdf.close()
+                except Exception:
+                    logging.warning("thumbnail_img(fitz) open error, %s", filename)
 
         return img
 
