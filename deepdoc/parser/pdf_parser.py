@@ -1046,15 +1046,12 @@ class RAGFlowPdfParser:
         self.page_cum_height = [0]
         self.page_layout = []
         self.page_from = page_from
+        self.total_page = 0
+        self.page_images = []
+        self.page_chars = []
         start = timer()
         try:
             with sys.modules[LOCK_KEY_pdfplumber]:
-
-                logging.info(f"RAGFlowPdfParser.__images__ self.total_page = %d", self.total_page)
-
-                self.total_page = 0
-                self.page_images = []
-
                 try:
                     with pdfplumber.open(fnm) if isinstance(fnm, str) else pdfplumber.open(BytesIO(fnm)) as pdf:
                         self.pdf = pdf
@@ -1083,8 +1080,6 @@ class RAGFlowPdfParser:
                         with fitz.open(fnm) if isinstance(fnm, str) else fitz.open(stream=fnm, filetype="pdf") as pdf:
                             self.pdf = pdf
                             self.total_page = pdf.page_count
-                            self.page_images = []
-                            self.page_chars = []                            
 
                             logging.warning("RAGFlowPdfParser.__images__ (fitz), total_page = %d, len(self.pdf) = %d", self.total_page, len(self.pdf))
 
