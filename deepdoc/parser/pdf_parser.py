@@ -1049,6 +1049,9 @@ class RAGFlowPdfParser:
         start = timer()
         try:
             with sys.modules[LOCK_KEY_pdfplumber]:
+
+                logging.info(f"RAGFlowPdfParser.__images__ self.total_page = %d", self.total_page)
+
                 self.total_page = 0
                 self.page_images = []
 
