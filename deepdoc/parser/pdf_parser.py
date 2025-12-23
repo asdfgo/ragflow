@@ -1022,7 +1022,7 @@ class RAGFlowPdfParser:
             total_page = len(pdf.pages)
             pdf.close()
         except Exception:
-            logging.warning("pdfplumber open error, %s", fnm)
+            logging.warning("total_page_number(pdfplumber) open error, %s", fnm)
 
 
         # by asdf : 应对扫描pdf
@@ -1033,7 +1033,7 @@ class RAGFlowPdfParser:
                         total_page = pdf.page_count
                         logging.warning("total_page_number (fitz) ok, %s, total_page == %d", fnm, total_page)
             except Exception:
-                logging.exception("total_page_number fitz error, %s", fnm)
+                logging.exception("total_page_number(fitz) error, %s", fnm)
         
         return total_page
 
@@ -1049,6 +1049,9 @@ class RAGFlowPdfParser:
         start = timer()
         try:
             with sys.modules[LOCK_KEY_pdfplumber]:
+                self.total_page = 0
+                self.page_images = []
+
                 try:
                     with pdfplumber.open(fnm) if isinstance(fnm, str) else pdfplumber.open(BytesIO(fnm)) as pdf:
                         self.pdf = pdf
@@ -1067,8 +1070,10 @@ class RAGFlowPdfParser:
                     logging.warning("RAGFlowPdfParser.__images__ (pdfplumber) error, %", fnm)
 
 
+                logging.info(f"RAGFlowPdfParser.__images__ (pdfplumber) self.total_page = %d", self.total_page)
+
                 # by asdf ：应对扫描pdf
-                if not self.total_page:
+                if not self.total_page or not self.page_images:
                     try:
                         logging.warning("begin RAGFlowPdfParser.__images__ (fitz) error, %s", fnm)
 
