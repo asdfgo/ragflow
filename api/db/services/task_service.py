@@ -364,8 +364,6 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
     if doc["type"] == FileType.PDF.value:
         file_bin = settings.STORAGE_IMPL.get(bucket, name)
         do_layout = doc["parser_config"].get("layout_recognize", "DeepDOC")
-
-        logging.warning("entering  total_page_number")
         pages = PdfParser.total_page_number(doc["name"], file_bin)
         if pages is None:
             pages = 0
@@ -374,18 +372,10 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
             page_size = doc["parser_config"].get("task_page_size") or 22
         if doc["parser_id"] in ["one", "knowledge_graph"] or do_layout != "DeepDOC" or doc["parser_config"].get("toc_extraction", False):
             page_size = 10 ** 9
-
-
-        # by asdf : debug
-        logging.warning("%s , pages = %d , page_size = %d", name, pages, page_size)
-
-
         page_ranges = doc["parser_config"].get("pages") or [(1, 10 ** 5)]
 
-
         # by asdf : debug
-        logging.warning("page_ranges = %s", json.dumps(page_ranges))
-
+        logging.warning("%s , pages = %d , page_size = %d, page_ranges = %s", name, pages, page_size, json.dumps(page_ranges))
 
         for s, e in page_ranges:
             s -= 1

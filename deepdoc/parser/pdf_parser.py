@@ -1028,7 +1028,6 @@ class RAGFlowPdfParser:
         # by asdf : 应对扫描pdf
         if not total_page:
             try:
-                logging.exception("total_page_number")
                 with sys.modules[LOCK_KEY_pdfplumber]:
                     with fitz.open(fnm) if not binary else fitz.open(stream=binary, filetype="pdf") as pdf:
                         total_page = pdf.page_count
@@ -1049,13 +1048,11 @@ class RAGFlowPdfParser:
         self.page_from = page_from
         start = timer()
         try:
-            total_page = 0
             with sys.modules[LOCK_KEY_pdfplumber]:
                 try:
                     with pdfplumber.open(fnm) if isinstance(fnm, str) else pdfplumber.open(BytesIO(fnm)) as pdf:
                         self.pdf = pdf
-                        total_page = len(self.pdf.pages)
-                        self.total_page = total_page
+                        self.total_page = len(self.pdf.pages)
                         logging.warning("begin RAGFlowPdfParser.__images__ (pdfplumber), total_page = %d", self.total_page)
 
                         if self.total_page:
@@ -1066,23 +1063,24 @@ class RAGFlowPdfParser:
                                 logging.warning(f"Failed to extract characters for pages {page_from}-{page_to}: {str(e)}")
                                 self.page_chars = [[] for _ in range(page_to - page_from)]  # If failed to extract, using empty list instead.
                 except Exception as e:
+                    self.total_page = 0
                     logging.warning("RAGFlowPdfParser.__images__ (pdfplumber) error, %", fnm)
 
 
                 # by asdf ：应对扫描pdf
-                if not total_page:
+                if not self.total_page:
                     try:
                         logging.warning("begin RAGFlowPdfParser.__images__ (fitz) error, %s", fnm)
 
                         with fitz.open(fnm) if isinstance(fnm, str) else fitz.open(stream=fnm, filetype="pdf") as pdf:
                             self.pdf = pdf
                             self.total_page = pdf.page_count
+                            self.page_images = []
+                            self.page_chars = []                            
 
                             logging.warning("RAGFlowPdfParser.__images__ (fitz), total_page = %d, len(self.pdf) = %d", self.total_page, len(self.pdf))
 
                             if self.total_page:
-                                self.page_images = []
-                                self.page_chars = []
                                 mat = fitz.Matrix(zoomin, zoomin)
                                 for i, page in enumerate(self.pdf):
                                     if i < page_from:
@@ -1095,7 +1093,6 @@ class RAGFlowPdfParser:
                                     self.page_chars.append([])
                     except Exception as e:
                         logging.exception("RAGFlowPdfParser.__images__ (fitz) error, %s, total_page == 0", fnm)
-
 
         except Exception:
             logging.exception("RAGFlowPdfParser __images__")
@@ -1468,7 +1465,31 @@ class VisionParser(RAGFlowPdfParser):
         except Exception:
             self.page_images = None
             self.total_page = 0
-            logging.exception("VisionParser __images__")
+            logging.exception("VisionParser __images__(pdfplumber) error")
+
+        # by asdf : 应对扫描pdf
+        if not self.total_page:
+            try:
+                with sys.modules[LOCK_KEY_pdfplumber]:
+                    self.pdf= fitz.open(fnm) if isinstance(fnm, str) else fitz.open(stream=fnm, filetype="pdf")
+                    self.total_page = self.pdf.page_count
+                    self.page_images = []
+                    if self.total_page:
+                        logging.warning("VisionParser __images__(fitz) ok, total_page = %d", self.total_page)
+                        mat = fitz.Matrix(zoomin, zoomin)
+                        for i, page in enumerate(self.pdf):
+                            if i < page_from:
+                                continue
+                            if i >= page_to:
+                                break
+                            pix = page.get_pixmap(matrix=mat)
+                            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                            self.page_images.append(img)
+            except Exception:
+                self.page_images = None
+                self.total_page = 0
+                logging.exception("VisionParser __images__(fitz) error")
+
 
     def __call__(self, filename, from_page=0, to_page=100000, **kwargs):
         callback = kwargs.get("callback", lambda prog, msg: None)
