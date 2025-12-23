@@ -1014,7 +1014,19 @@ class RAGFlowPdfParser:
 
     @staticmethod
     def total_page_number(fnm, binary=None):
-        logging.warning("entered total_page_number")
+        # 方法1：使用 print 确认函数执行
+        print(f"[DEBUG] Entered total_page_number: {fnm}")
+        
+        # 方法2：使用 logging 的不同级别
+        logging.debug("entered total_page_number - debug")
+        logging.info("entered total_page_number - info")
+        logging.warning("entered total_page_number - warning")
+        logging.error("entered total_page_number - error")
+        
+        # 方法3：检查当前模块的日志配置
+        current_logger = logging.getLogger(__name__)
+        logging.warning(f"Current logger level: {current_logger.level}")
+        logging.warning(f"Effective level: {current_logger.getEffectiveLevel()}")
 
 
         total_page = 0
