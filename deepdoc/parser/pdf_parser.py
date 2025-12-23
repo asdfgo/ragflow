@@ -1050,6 +1050,9 @@ class RAGFlowPdfParser:
         self.page_images = []
         self.page_chars = []
         start = timer()
+
+        logging.warning("================== __images__ =====================")
+
         try:
             with sys.modules[LOCK_KEY_pdfplumber]:
                 try:
