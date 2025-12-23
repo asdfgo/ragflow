@@ -1078,7 +1078,7 @@ class RAGFlowPdfParser:
                             self.pdf = pdf
                             self.total_page = pdf.page_count
 
-                            logging.warning("RAGFlowPdfParser.__images__ (fitz), total_page = %d, len(self.pdf) = %d", self.total_page, len(self.pdf)
+                            logging.warning("RAGFlowPdfParser.__images__ (fitz), total_page = %d, len(self.pdf) = %d", self.total_page, len(self.pdf))
 
                             if self.total_page:
                                 self.page_images = []
