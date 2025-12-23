@@ -55,7 +55,7 @@ services:
     # If you use Docker Desktop, the --add-host flag is optional. This flag ensures that the host's internal IP is exposed to the Prometheus container.
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    entrypoint: /bin/bash -c "chmod +x /ragflow/entrypoint-ragflow.sh && /ragflow/entrypoint-ragflow.sh python3 app.py"
+    entrypoint: /bin/bash -c "chmod +x /ragflow/entrypoint-ragflow.sh && /ragflow/entrypoint-ragflow.sh"
 
   ragflow-gpu:
     depends_on:
