@@ -1049,11 +1049,15 @@ class RAGFlowPdfParser:
         self.page_from = page_from
         start = timer()
         try:
+            total_page = 0
             with sys.modules[LOCK_KEY_pdfplumber]:
                 try:
                     with pdfplumber.open(fnm) if isinstance(fnm, str) else pdfplumber.open(BytesIO(fnm)) as pdf:
                         self.pdf = pdf
-                        self.total_page = len(self.pdf.pages)
+                        total_page = len(self.pdf.pages)
+                        self.total_page = total_page
+                        logging.warning("begin RAGFlowPdfParser.__images__ (pdfplumber), total_page = %d", self.total_page)
+
                         if self.total_page:
                             self.page_images = [p.to_image(resolution=72 * zoomin, antialias=True).annotated for i, p in enumerate(self.pdf.pages[page_from:page_to])]
                             try:
@@ -1062,15 +1066,20 @@ class RAGFlowPdfParser:
                                 logging.warning(f"Failed to extract characters for pages {page_from}-{page_to}: {str(e)}")
                                 self.page_chars = [[] for _ in range(page_to - page_from)]  # If failed to extract, using empty list instead.
                 except Exception as e:
-                    logging.warning("RAGFlowPdfParser.__images__ (pdfplumber) error, %s, total_page == 0", fnm)
+                    logging.warning("RAGFlowPdfParser.__images__ (pdfplumber) error, %", fnm)
 
 
                 # by asdf ：应对扫描pdf
-                if not self.total_page:
+                if not total_page:
                     try:
+                        logging.warning("begin RAGFlowPdfParser.__images__ (fitz) error, %s", fnm)
+
                         with fitz.open(fnm) if isinstance(fnm, str) else fitz.open(stream=fnm, filetype="pdf") as pdf:
                             self.pdf = pdf
                             self.total_page = pdf.page_count
+
+                            logging.warning("RAGFlowPdfParser.__images__ (fitz), total_page = %d, len(self.pdf) = %d", self.total_page, len(self.pdf)
+
                             if self.total_page:
                                 self.page_images = []
                                 self.page_chars = []
