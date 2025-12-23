@@ -43,10 +43,8 @@ services:
       - ./service_conf.yaml.template:/ragflow/conf/service_conf.yaml.template
       - ./entrypoint.sh:/ragflow/entrypoint.sh
 
-      # - ./entrypoint-ragflow.sh:/ragflow/entrypoint-ragflow.sh
       - ../libs:/ragflow/libs
       - ../api:/ragflow/api
-      - ../pyproject.toml:/ragflow/pyproject.toml
     env_file: .env
     networks:
       - ragflow
@@ -55,7 +53,6 @@ services:
     # If you use Docker Desktop, the --add-host flag is optional. This flag ensures that the host's internal IP is exposed to the Prometheus container.
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    # entrypoint: /bin/bash -c "chmod +x /ragflow/entrypoint-ragflow.sh && /ragflow/entrypoint-ragflow.sh"
 
   ragflow-gpu:
     depends_on:

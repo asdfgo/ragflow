@@ -1016,27 +1016,28 @@ class RAGFlowPdfParser:
     def total_page_number(fnm, binary=None):
         total_page = 0
 
-
         try:
             with sys.modules[LOCK_KEY_pdfplumber]:
                 pdf = pdfplumber.open(fnm) if not binary else pdfplumber.open(BytesIO(binary))
             total_page = len(pdf.pages)
             pdf.close()
         except Exception:
-            logging.exception("total_page_number")
+            logging.warning("pdfplumber open error, %s, total_page == 0", fnm)
 
+        logging.warning("pdfplumber open error, %s, total_page == 0", fnm)
 
         # by asdf : 应对扫描pdf
-        if total_page is None or total_page==0:
+        if not total_page:
             try:
+                logging.exception("total_page_number")
                 with sys.modules[LOCK_KEY_pdfplumber]:
                     pdf: Any = fitz.open(fnm) if not binary else fitz.open(stream=binary, filetype="pdf")
                 total_page = pdf.page_count
                 pdf.close()
+                logging.warning("fitz ok, %s, total_page == %d", fnm, total_page)
             except Exception:
-                logging.exception("total_page_number")
+                logging.exception("total_page_number fitz error")
         
-
         return total_page
 
     def __images__(self, fnm, zoomin=3, page_from=0, page_to=299, callback=None):
