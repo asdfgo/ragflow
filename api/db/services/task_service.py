@@ -375,7 +375,7 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
         page_ranges = doc["parser_config"].get("pages") or [(1, 10 ** 5)]
 
         # by asdf : debug
-        logging.warning("%s , pages = %d , page_size = %d, page_ranges = %s", name, pages, page_size, json.dumps(page_ranges))
+        logging.warning("%s , pages = %d , page_size = %d,  page_ranges = %s", name, pages, page_size, json.dumps(page_ranges))
 
         for s, e in page_ranges:
             s -= 1
