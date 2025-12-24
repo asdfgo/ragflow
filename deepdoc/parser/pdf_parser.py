@@ -1464,7 +1464,7 @@ class VisionParser(RAGFlowPdfParser):
             logging.exception("VisionParser __images__(pdfplumber) error")
 
         # by asdf : 应对扫描pdf
-        if not self.total_page or  or self.total_page<=1:
+        if not self.total_page or self.total_page<=1:
             try:
                 with sys.modules[LOCK_KEY_pdfplumber]:
                     self.pdf= fitz.open(fnm) if isinstance(fnm, str) else fitz.open(stream=fnm, filetype="pdf")
