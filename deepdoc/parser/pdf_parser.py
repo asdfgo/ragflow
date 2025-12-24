@@ -686,7 +686,12 @@ class RAGFlowPdfParser:
                 if i >= len(self.boxes):
                     break
                 prefix = self.boxes[i]["text"].strip()[:3] if not eng else " ".join(self.boxes[i]["text"].strip().split()[:2])
-            self.boxes.pop(i)
+                
+            try:
+                self.boxes.pop(i)
+            except:
+                pass
+
             if i >= len(self.boxes) or not prefix:
                 break
             for j in range(i, min(i + 128, len(self.boxes))):
