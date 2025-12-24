@@ -89,7 +89,7 @@ def thumbnail_img(filename, blob):
 
 
             # by asdf : 应对扫描pdf
-            if not total_page:
+            if not total_page or total_page<=1:
                 try:
                     pdf = fitz.open(stream=blob, filetype="pdf")
                     pix = pdf[0].get_pixmap(matrix=fitz.Matrix(0.03, 0.03))

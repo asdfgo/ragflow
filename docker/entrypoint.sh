@@ -287,7 +287,7 @@ if [[ "${ENABLE_TASKEXECUTOR}" -eq 1 ]]; then
 fi
 
 
-# 安装本地保存的 PyMuPDF 库
+# by asdf : 安装本地保存的 PyMuPDF 库
 echo "Installing PyMuPDF from local files..."
 pip install --no-index --find-links=/ragflow/libs PyMuPDF
 

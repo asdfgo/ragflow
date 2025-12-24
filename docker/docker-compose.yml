@@ -43,6 +43,7 @@ services:
       - ./service_conf.yaml.template:/ragflow/conf/service_conf.yaml.template
       - ./entrypoint.sh:/ragflow/entrypoint.sh
 
+      # by asdf
       - ../libs:/ragflow/libs
       - ../api:/ragflow/api
       - ../deepdoc:/ragflow/deepdoc

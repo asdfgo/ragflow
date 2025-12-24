@@ -63,7 +63,7 @@ def init_in_out(args):
 
 
             # by asdf : 应对扫描pdf
-            if not total_page:
+            if not total_page or total_page<=1:
                 try:
                     with fitz.open(fnm) as pdf:
                         mat = fitz.Matrix(zoomin, zoomin)

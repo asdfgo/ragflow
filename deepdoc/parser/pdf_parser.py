@@ -1026,7 +1026,7 @@ class RAGFlowPdfParser:
 
 
         # by asdf : 应对扫描pdf
-        if not total_page:
+        if not total_page or total_page<=1:
             try:
                 with sys.modules[LOCK_KEY_pdfplumber]:
                     with fitz.open(fnm) if not binary else fitz.open(stream=binary, filetype="pdf") as pdf:
@@ -1069,7 +1069,7 @@ class RAGFlowPdfParser:
                     logging.warning("RAGFlowPdfParser.__images__ (pdfplumber) error, %s", fnm)
 
                 # by asdf ：应对扫描pdf
-                if not self.total_page:
+                if not self.total_page or self.total_page<=1:
                     try:
                         with fitz.open(fnm) if isinstance(fnm, str) else fitz.open(stream=fnm, filetype="pdf") as pdf:
                             self.pdf = pdf
@@ -1464,7 +1464,7 @@ class VisionParser(RAGFlowPdfParser):
             logging.exception("VisionParser __images__(pdfplumber) error")
 
         # by asdf : 应对扫描pdf
-        if not self.total_page:
+        if not self.total_page or  or self.total_page<=1:
             try:
                 with sys.modules[LOCK_KEY_pdfplumber]:
                     self.pdf= fitz.open(fnm) if isinstance(fnm, str) else fitz.open(stream=fnm, filetype="pdf")
